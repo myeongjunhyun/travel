@@ -302,8 +302,8 @@ DayGo는 오픈소스 프로젝트입니다! 기여를 환영합니다. 🎉
 
 ## 💬 문의 및 지원
 
-- **이슈 등록**: [GitHub Issues](https://github.com/YOUR_USERNAME/travel/issues)
-- **이메일**: your.email@example.com
+- **이슈 등록**: [GitHub Issues](https://github.com/ImYourNote/travel/issues)
+- **이메일**: ktnote5716@gmail.com
 
 <br>
 
@@ -315,7 +315,7 @@ DayGo는 오픈소스 프로젝트입니다! 기여를 환영합니다. 🎉
 
 **DayGo와 함께 완벽한 여행을 준비하세요! ✈️**
 
-Made with ❤️ by 1인 개발자
+Made with ❤️ by ImYourNote
 
 <br>
 
