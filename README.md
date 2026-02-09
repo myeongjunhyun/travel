@@ -88,7 +88,8 @@
 <br>
 
 ### 📱 크로스 플랫폼
-iOS와 Android 모두 지원합니다.
+iOS, Android, 그리고 **Web**까지 완벽하게 지원합니다.
+(웹 환경에서는 브라우저의 파일 시스템을 활용합니다)
 
 <br>
 
@@ -119,6 +120,7 @@ cd travel
 
 ```bash
 npm install
+npx expo install
 ```
 
 <br>
@@ -234,13 +236,13 @@ travel/
 
 ## 🗺️ 로드맵
 
-### ✅ Phase 1: MVP (현재)
+### ✅ Phase 1: MVP (완료)
 - [x] 프로젝트 초기화
 - [x] README 작성
-- [ ] 여행 생성/목록 기능
-- [ ] 일차별 콘텐츠 관리
-- [ ] 사진/파일 업로드
-- [ ] 오프라인 저장
+- [x] 여행 생성/목록 기능
+- [x] 일차별 콘텐츠 관리
+- [x] 사진/파일 업로드
+- [x] 오프라인 저장 (AsyncStorage + FileSystem)
 
 <br>
 

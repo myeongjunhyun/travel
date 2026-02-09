@@ -30,9 +30,13 @@ export function AddTripModal({ visible, onClose, onAdd }: AddTripModalProps) {
             return;
         }
 
-        // YYYY-MM-DD 형식으로 변환
         const startStr = startDate.toISOString().split('T')[0];
         const endStr = endDate.toISOString().split('T')[0];
+
+        if (startDate > endDate) {
+            alert('종료일은 시작일보다 빠를 수 없습니다!');
+            return;
+        }
 
         await onAdd(title, startStr, endStr);
         setTitle('');
@@ -41,20 +45,36 @@ export function AddTripModal({ visible, onClose, onAdd }: AddTripModalProps) {
         onClose();
     };
 
-    const onDateChange = (event: any, selectedDate?: Date, isStart = true) => {
+    const onDateChange = (event: unknown, selectedDate?: Date, isStart = true) => {
         const currentDate = selectedDate || (isStart ? startDate : endDate);
         if (Platform.OS === 'android') {
-            isStart ? setShowStartPicker(false) : setShowEndPicker(false);
+            if (isStart) {
+                setShowStartPicker(false);
+            } else {
+                setShowEndPicker(false);
+            }
         }
 
         if (isStart) {
             setStartDate(currentDate);
-            // 종료일이 시작일보다 빠르면 종료일을 시작일로 맞춤
             if (endDate < currentDate) {
                 setEndDate(currentDate);
             }
         } else {
             setEndDate(currentDate);
+        }
+    };
+
+    // 웹용 날짜 변경 핸들러
+    const onWebDateChange = (e: { target: { value: string } }, isStart: boolean) => {
+        const date = new Date(e.target.value);
+        if (!isNaN(date.getTime())) {
+            if (isStart) {
+                setStartDate(date);
+                if (endDate < date) setEndDate(date);
+            } else {
+                setEndDate(date);
+            }
         }
     };
 
@@ -81,12 +101,28 @@ export function AddTripModal({ visible, onClose, onAdd }: AddTripModalProps) {
                     <View style={styles.dateContainer}>
                         <View style={styles.dateField}>
                             <Text style={styles.dateLabel}>가는 날</Text>
-                            <TouchableOpacity
-                                style={styles.dateButton}
-                                onPress={() => setShowStartPicker(true)}
-                            >
-                                <Text>{startDate.toLocaleDateString()}</Text>
-                            </TouchableOpacity>
+                            {Platform.OS === 'web' ? (
+                                <input
+                                    type="date"
+                                    value={startDate.toISOString().split('T')[0]}
+                                    onChange={(e) => onWebDateChange(e, true)}
+                                    style={{
+                                        padding: 10,
+                                        borderRadius: 8,
+                                        border: '1px solid #ddd',
+                                        fontSize: 16,
+                                        width: '100%',
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                            ) : (
+                                <TouchableOpacity
+                                    style={styles.dateButton}
+                                    onPress={() => setShowStartPicker(true)}
+                                >
+                                    <Text>{startDate.toLocaleDateString()}</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
 
                         <View style={styles.dateArrow}>
@@ -95,31 +131,47 @@ export function AddTripModal({ visible, onClose, onAdd }: AddTripModalProps) {
 
                         <View style={styles.dateField}>
                             <Text style={styles.dateLabel}>오는 날</Text>
-                            <TouchableOpacity
-                                style={styles.dateButton}
-                                onPress={() => setShowEndPicker(true)}
-                            >
-                                <Text>{endDate.toLocaleDateString()}</Text>
-                            </TouchableOpacity>
+                            {Platform.OS === 'web' ? (
+                                <input
+                                    type="date"
+                                    value={endDate.toISOString().split('T')[0]}
+                                    onChange={(e) => onWebDateChange(e, false)}
+                                    style={{
+                                        padding: 10,
+                                        borderRadius: 8,
+                                        border: '1px solid #ddd',
+                                        fontSize: 16,
+                                        width: '100%',
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                            ) : (
+                                <TouchableOpacity
+                                    style={styles.dateButton}
+                                    onPress={() => setShowEndPicker(true)}
+                                >
+                                    <Text>{endDate.toLocaleDateString()}</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </View>
 
-                    {showStartPicker && (
+                    {Platform.OS !== 'web' && showStartPicker && (
                         <DateTimePicker
                             value={startDate}
                             mode="date"
                             display="default"
-                            onChange={(e, date) => onDateChange(e, date, true)}
+                            onChange={(e: any, date?: Date) => onDateChange(e, date, true)}
                             minimumDate={new Date()}
                         />
                     )}
 
-                    {showEndPicker && (
+                    {Platform.OS !== 'web' && showEndPicker && (
                         <DateTimePicker
                             value={endDate}
                             mode="date"
                             display="default"
-                            onChange={(e, date) => onDateChange(e, date, false)}
+                            onChange={(e: any, date?: Date) => onDateChange(e, date, false)}
                             minimumDate={startDate}
                         />
                     )}

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 
 const TRIP_ASSETS_DIR = FileSystem.documentDirectory + 'trip_assets/';
@@ -6,6 +7,7 @@ const TRIP_ASSETS_DIR = FileSystem.documentDirectory + 'trip_assets/';
  * 앱 전용 자산 디렉토리가 존재하는지 확인하고 없으면 생성합니다.
  */
 export const ensureDirExists = async () => {
+    if (Platform.OS === 'web') return; // 웹에서는 파일 시스템 지원 안 함
     const dirInfo = await FileSystem.getInfoAsync(TRIP_ASSETS_DIR);
     if (!dirInfo.exists) {
         console.log("Trip directory doesn't exist, creating...");
@@ -20,6 +22,8 @@ export const ensureDirExists = async () => {
  * @returns 저장된 파일의 로컬 URI
  */
 export const saveFileToLocal = async (uri: string, fileName: string): Promise<string> => {
+    if (Platform.OS === 'web') return uri; // 웹에서는 복사 없이 원본 URI 사용
+
     await ensureDirExists();
     const destPath = TRIP_ASSETS_DIR + fileName;
 

@@ -12,7 +12,7 @@ interface TripState {
     loadTrips: () => Promise<void>;
     setCurrentTrip: (id: string) => void;
     addTrip: (title: string, startDate: string, endDate: string) => Promise<void>;
-    addContentItem: (tripId: string, dayId: string, item: Omit<ContentItem, 'id' | 'createdAt'>) => Promise<void>;
+    addContentItem: (tripId: string, dayId: string, item: Omit<ContentItem, 'id' | 'createdAt' | 'dayId'>) => Promise<void>;
 }
 
 /**
@@ -30,7 +30,7 @@ export const useTripStore = create<TripState>((set, get) => ({
         try {
             const trips = await storage.getTrips();
             set({ trips, isLoading: false });
-        } catch (error) {
+        } catch {
             set({ error: '여행 목록을 불러오는데 실패했습니다', isLoading: false });
         }
     },
@@ -77,7 +77,7 @@ export const useTripStore = create<TripState>((set, get) => ({
             await storage.addTrip(newTrip);
             const trips = await storage.getTrips();
             set({ trips, isLoading: false });
-        } catch (error) {
+        } catch {
             set({ error: '여행을 생성하는데 실패했습니다', isLoading: false });
         }
     },
@@ -116,7 +116,7 @@ export const useTripStore = create<TripState>((set, get) => ({
                 currentTrip: updatedTrip.id === get().currentTrip?.id ? updatedTrip : get().currentTrip,
                 isLoading: false
             });
-        } catch (error) {
+        } catch {
             set({ error: '자료를 추가하는데 실패했습니다', isLoading: false });
         }
     },

@@ -1,11 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert, Platform } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useTripStore } from '@/store/tripStore';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { Trip, Day, ContentItem } from '@/types';
+import { Trip } from '@/types';
 import { saveFileToLocal, generateFileName } from '@/lib/fileSystem';
 
 /**
@@ -24,7 +24,7 @@ export default function TripDetailScreen() {
         if (trips.length === 0) {
             loadTrips();
         }
-    }, []);
+    }, [loadTrips, trips.length]);
 
     useEffect(() => {
         if (id && trips.length > 0) {
@@ -62,11 +62,14 @@ export default function TripDetailScreen() {
             if (!result.canceled && currentDay) {
                 setIsUploading(true);
                 const asset = result.assets[0];
+
+                // 웹에서는 로컬 저장소 복사 생략 (fileSystem.web.ts 처리가 되어 있음)
                 const fileName = generateFileName(asset.uri);
                 const savedUri = await saveFileToLocal(asset.uri, fileName);
 
                 const defaultTitle = `${selectedDay}일차 사진 ${currentDay.items.length + 1}`;
 
+                // dayId는 store 함수 인자로 넘기므로 객체에는 포함하지 않음
                 await addContentItem(currentTrip.id, currentDay.id, {
                     title: defaultTitle,
                     type: 'photo',
@@ -83,6 +86,28 @@ export default function TripDetailScreen() {
 
     const handleAddFile = async () => {
         try {
+            if (Platform.OS === 'web') {
+                // 웹: input type="file" 사용
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.onchange = async (e: any) => {
+                    const file = e.target.files[0];
+                    if (file && currentDay) {
+                        // File 객체를 object URL로 변환하여 임시 사용
+                        const objectUrl = URL.createObjectURL(file);
+
+                        await addContentItem(currentTrip.id, currentDay.id, {
+                            title: file.name,
+                            type: 'file',
+                            uri: objectUrl
+                        });
+                    }
+                };
+                input.click();
+                return;
+            }
+
+            // 네이티브: DocumentPicker 사용
             const result = await DocumentPicker.getDocumentAsync({
                 type: '*/*',
                 copyToCacheDirectory: true,
@@ -109,6 +134,17 @@ export default function TripDetailScreen() {
     };
 
     const showAddOptions = () => {
+        // 웹에서는 Alert.alert 옵션 버튼이 제대로 동작 안 할 수 있음 -> 바로 모달을 띄우거나 confirm 사용
+        if (Platform.OS === 'web') {
+            const choice = confirm('어떤 자료를 추가하시겠습니까?\n확인: 사진/캡처\n취소: 파일(PDF 등)');
+            if (choice) {
+                handleAddPhoto();
+            } else {
+                handleAddFile();
+            }
+            return;
+        }
+
         Alert.alert(
             '자료 추가하기',
             '어떤 자료를 추가하시겠습니까?',
@@ -137,7 +173,7 @@ export default function TripDetailScreen() {
                 }}
             />
 
-            {/* 일차 탭 영역 */}
+            {/* 일차 탭 영역 - 웹 호환성을 위해 스타일 조정 */}
             <View style={styles.tabWrapper}>
                 <ScrollView
                     horizontal

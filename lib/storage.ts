@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Trip, Day, ContentItem } from '@/types';
+import { Trip } from '@/types';
 
 const KEYS = {
     TRIPS: '@daygo_trips',

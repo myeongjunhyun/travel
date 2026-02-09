@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useState, useCallback } from 'react';
-import { Trip } from '@/types';
 import { useTripStore } from '@/store/tripStore';
 import { AddTripModal } from '@/components/AddTripModal';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +17,7 @@ export default function TripsScreen() {
     useFocusEffect(
         useCallback(() => {
             loadTrips();
-        }, [])
+        }, [loadTrips])
     );
 
     const handleAddTrip = async (title: string, startDate: string, endDate: string) => {
