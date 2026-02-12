@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const TRIP_ASSETS_DIR = FileSystem.documentDirectory + 'trip_assets/';
 
