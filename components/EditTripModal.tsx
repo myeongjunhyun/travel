@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -7,21 +7,32 @@ import {
     TouchableOpacity,
     Modal,
     Pressable,
-    Platform
+    Platform,
+    Alert
 } from 'react-native';
+import { Trip } from '@/types';
 import { TripCalendarModal } from '@/components/TripCalendarModal';
 
-interface AddTripModalProps {
+interface EditTripModalProps {
     visible: boolean;
+    trip: Trip | null;
     onClose: () => void;
-    onAdd: (title: string, startDate: string, endDate: string) => Promise<void>;
+    onUpdate: (title: string, startDate: string, endDate: string) => Promise<void>;
 }
 
-export function AddTripModal({ visible, onClose, onAdd }: AddTripModalProps) {
+export function EditTripModal({ visible, trip, onClose, onUpdate }: EditTripModalProps) {
     const [title, setTitle] = useState('');
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
     const [isCalendarVisible, setIsCalendarVisible] = useState(false);
+
+    useEffect(() => {
+        if (trip) {
+            setTitle(trip.title);
+            setStartDate(new Date(trip.startDate));
+            setEndDate(new Date(trip.endDate));
+        }
+    }, [trip, visible]);
 
     const handleSubmit = async () => {
         if (!title.trim()) {
@@ -37,10 +48,40 @@ export function AddTripModal({ visible, onClose, onAdd }: AddTripModalProps) {
             return;
         }
 
-        await onAdd(title, startStr, endStr);
-        setTitle('');
-        setStartDate(new Date());
-        setEndDate(new Date());
+        // 날짜 변경 여부 확인
+        const isDateChanged =
+            trip?.startDate !== startStr ||
+            trip?.endDate !== endStr;
+
+        if (isDateChanged) {
+            // 날짜 변경 시 경고
+            if (Platform.OS === 'web') {
+                const confirmed = confirm(
+                    '날짜를 수정하면 일차별 내용(사진, 파일)이 초기화됩니다.\n준비물 목록만 유지됩니다.\n계속하시겠습니까?'
+                );
+                if (!confirmed) return;
+            } else {
+                Alert.alert(
+                    '날짜 수정 주의',
+                    '날짜를 수정하면 일차별 내용(사진, 파일)이 초기화됩니다.\n준비물 목록만 유지됩니다.\n계속하시겠습니까?',
+                    [
+                        { text: '취소', style: 'cancel' },
+                        {
+                            text: '수정 및 초기화',
+                            style: 'destructive',
+                            onPress: async () => {
+                                await onUpdate(title, startStr, endStr);
+                                onClose();
+                            }
+                        }
+                    ]
+                );
+                return; // Alert 비동기 처리 대기
+            }
+        }
+
+        // 날짜 변경 없음 or 웹 확인 완료
+        await onUpdate(title, startStr, endStr);
         onClose();
     };
 
@@ -58,7 +99,7 @@ export function AddTripModal({ visible, onClose, onAdd }: AddTripModalProps) {
         >
             <View style={styles.centeredView}>
                 <View style={styles.modalView}>
-                    <Text style={styles.modalTitle}>새 여행 만들기</Text>
+                    <Text style={styles.modalTitle}>여행 정보 수정</Text>
 
                     <Text style={styles.label}>여행 이름</Text>
                     <TextInput
@@ -95,7 +136,7 @@ export function AddTripModal({ visible, onClose, onAdd }: AddTripModalProps) {
                             style={[styles.button, styles.buttonSave]}
                             onPress={handleSubmit}
                         >
-                            <Text style={styles.textStyle}>만들기</Text>
+                            <Text style={styles.textStyle}>수정 완료</Text>
                         </Pressable>
                     </View>
                 </View>

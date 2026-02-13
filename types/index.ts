@@ -9,6 +9,7 @@ export type Trip = {
     updatedAt: string;
     days: Day[];
     checklist: ChecklistItem[];
+    coverImageUri?: string; // [코다리 부장] 사용자가 선택한 커버 이미지!
 };
 
 export type ChecklistItem = {
@@ -34,6 +35,7 @@ export type ContentItem = {
     type: 'photo' | 'file';
     uri: string; // 로컬 URI
     cloudUrl?: string; // Supabase 클라우드 URL
+    description?: string; // 사용자가 입력한 설명 (메모)
     createdAt: string;
 };
 

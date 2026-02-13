@@ -59,6 +59,7 @@ export default function ChecklistTab({ trip }: ChecklistTabProps) {
                 <TextInput
                     style={styles.input}
                     placeholder="준비물을 입력하세요 (예: 여권, 충전기)"
+                    placeholderTextColor="#666"
                     value={newItemText}
                     onChangeText={setNewItemText}
                     onSubmitEditing={handleAddItem}

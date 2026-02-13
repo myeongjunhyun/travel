@@ -9,7 +9,7 @@ export default function TabLayout() {
     return (
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor: '#007AFF',
+                tabBarActiveTintColor: '#FF9A56', // [코다리 부장] 주황색 탭 바!
                 headerShown: true,
             }}
         >

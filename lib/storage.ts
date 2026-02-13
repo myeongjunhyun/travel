@@ -76,4 +76,17 @@ export const storage = {
             console.error('여행 업데이트 실패:', e);
         }
     },
+
+    /**
+     * 여행 삭제하기
+     */
+    deleteTrip: async (id: string): Promise<void> => {
+        try {
+            const trips = await storage.getTrips();
+            const newTrips = trips.filter((t) => t.id !== id);
+            await storage.saveTrips(newTrips);
+        } catch (e) {
+            console.error('여행 삭제 실패:', e);
+        }
+    },
 };

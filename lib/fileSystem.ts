@@ -55,3 +55,27 @@ export const generateFileName = (originalUri: string): string => {
     const random = Math.floor(Math.random() * 1000);
     return `asset_${timestamp}_${random}.${ext}`;
 };
+/**
+ * 파일 확장자에 따른 MIME 타입을 반환합니다.
+ */
+export const getMimeType = (uri: string): string => {
+    const ext = getFileExtension(uri).toLowerCase();
+    switch (ext) {
+        case 'pdf': return 'application/pdf';
+        case 'doc': return 'application/msword';
+        case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        case 'xls': return 'application/vnd.ms-excel';
+        case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        case 'ppt': return 'application/vnd.ms-powerpoint';
+        case 'pptx': return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+        case 'txt': return 'text/plain';
+        case 'jpg':
+        case 'jpeg': return 'image/jpeg';
+        case 'png': return 'image/png';
+        case 'gif': return 'image/gif';
+        case 'zip': return 'application/zip';
+        case 'mp3': return 'audio/mpeg';
+        case 'mp4': return 'video/mp4';
+        default: return '*/*'; // 기본값: 모든 파일
+    }
+};

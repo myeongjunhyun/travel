@@ -13,9 +13,14 @@ interface TripState {
     setCurrentTrip: (id: string) => void;
     addTrip: (title: string, startDate: string, endDate: string) => Promise<void>;
     addContentItem: (tripId: string, dayId: string, item: Omit<ContentItem, 'id' | 'createdAt' | 'dayId'>) => Promise<void>;
+    updateContentItem: (tripId: string, dayId: string, itemId: string, description: string) => Promise<void>;
+    deleteContentItem: (tripId: string, dayId: string, itemId: string) => Promise<void>;
     addChecklistItem: (tripId: string, text: string) => Promise<void>;
     toggleChecklistItem: (tripId: string, itemId: string) => Promise<void>;
     removeChecklistItem: (tripId: string, itemId: string) => Promise<void>;
+    setCoverImage: (tripId: string, imageUri: string) => Promise<void>; // [코다리 부장] 배경 선택!
+    deleteTrip: (tripId: string) => Promise<void>;
+    updateTripDates: (tripId: string, title: string, startDate: string, endDate: string) => Promise<void>;
 }
 
 /**
@@ -107,7 +112,7 @@ export const useTripStore = create<TripState>((set, get) => ({
                 createdAt: new Date().toISOString(),
             };
 
-            updatedTrip.days[dayIndex].items.push(newItem);
+            updatedTrip.days[dayIndex].items.unshift(newItem); // [코다리 부장] 새 항목을 맨 위에 추가!
             updatedTrip.updatedAt = new Date().toISOString();
 
             await storage.updateTrip(updatedTrip);
@@ -125,6 +130,67 @@ export const useTripStore = create<TripState>((set, get) => ({
             set({ error: '자료를 추가하는데 실패했습니다', isLoading: false });
         }
     },
+
+    updateContentItem: async (tripId: string, dayId: string, itemId: string, description: string) => {
+        try {
+            const { trips } = get();
+            const tripIndex = trips.findIndex((t) => t.id === tripId);
+            if (tripIndex === -1) return;
+
+            const updatedTrip = { ...trips[tripIndex] };
+            const dayIndex = updatedTrip.days.findIndex((d) => d.id === dayId);
+            if (dayIndex === -1) return;
+
+            const itemIndex = updatedTrip.days[dayIndex].items.findIndex((i) => i.id === itemId);
+            if (itemIndex === -1) return;
+
+            // 설명 업데이트
+            updatedTrip.days[dayIndex].items[itemIndex].description = description;
+            updatedTrip.updatedAt = new Date().toISOString();
+
+            await storage.updateTrip(updatedTrip);
+
+            const newTrips = [...trips];
+            newTrips[tripIndex] = updatedTrip;
+
+            set({
+                trips: newTrips,
+                currentTrip: updatedTrip.id === get().currentTrip?.id ? updatedTrip : get().currentTrip,
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    },
+
+    deleteContentItem: async (tripId: string, dayId: string, itemId: string) => {
+        try {
+            const { trips } = get();
+            const tripIndex = trips.findIndex((t) => t.id === tripId);
+            if (tripIndex === -1) return;
+
+            const updatedTrip = { ...trips[tripIndex] };
+            const dayIndex = updatedTrip.days.findIndex((d) => d.id === dayId);
+            if (dayIndex === -1) return;
+
+            // 항목 삭제
+            updatedTrip.days[dayIndex].items = updatedTrip.days[dayIndex].items.filter((i) => i.id !== itemId);
+            updatedTrip.updatedAt = new Date().toISOString();
+
+            await storage.updateTrip(updatedTrip);
+
+            const newTrips = [...trips];
+            newTrips[tripIndex] = updatedTrip;
+
+            set({
+                trips: newTrips,
+                currentTrip: updatedTrip.id === get().currentTrip?.id ? updatedTrip : get().currentTrip,
+            });
+        } catch (e) {
+            console.error(e);
+            set({ error: '항목 삭제 실패' });
+        }
+    },
+
 
     addChecklistItem: async (tripId: string, text: string) => {
         try {
@@ -215,6 +281,114 @@ export const useTripStore = create<TripState>((set, get) => ({
             });
         } catch (e) {
             console.error(e);
+        }
+    },
+
+    // [코다리 부장] 커버 이미지 설정 기능!
+    setCoverImage: async (tripId: string, imageUri: string) => {
+        try {
+            const { trips } = get();
+            const tripIndex = trips.findIndex((t) => t.id === tripId);
+            if (tripIndex === -1) return;
+
+            const updatedTrip = { ...trips[tripIndex] };
+            updatedTrip.coverImageUri = imageUri;
+            updatedTrip.updatedAt = new Date().toISOString();
+
+            await storage.updateTrip(updatedTrip);
+
+            const newTrips = [...trips];
+            newTrips[tripIndex] = updatedTrip;
+
+            set({
+                trips: newTrips,
+                currentTrip: updatedTrip.id === get().currentTrip?.id ? updatedTrip : get().currentTrip,
+            });
+        } catch {
+            set({ error: '배경 이미지 설정 실패' });
+        }
+    },
+
+    deleteTrip: async (tripId: string) => {
+        set({ isLoading: true, error: null });
+        try {
+            const { trips } = get();
+            await storage.deleteTrip(tripId);
+
+            const newTrips = trips.filter(t => t.id !== tripId);
+
+            set({
+                trips: newTrips,
+                currentTrip: null,
+                isLoading: false
+            });
+        } catch (e) {
+            set({ error: '여행 삭제 실패', isLoading: false });
+        }
+    },
+
+    updateTripDates: async (tripId: string, title: string, startDate: string, endDate: string) => {
+        set({ isLoading: true, error: null });
+        try {
+            const { trips } = get();
+            const tripIndex = trips.findIndex((t) => t.id === tripId);
+            if (tripIndex === -1) return;
+
+            const existingTrip = trips[tripIndex];
+
+            // 날짜가 변경되었는지 확인
+            const isDateChanged = existingTrip.startDate !== startDate || existingTrip.endDate !== endDate;
+
+            let updatedTrip: Trip;
+
+            if (isDateChanged) {
+                // 날짜가 변경된 경우: Days 재생성 (내용 초기화)
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const diffTime = Math.abs(end.getTime() - start.getTime());
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+                const days: Day[] = Array.from({ length: diffDays }, (_, i) => {
+                    const date = new Date(start);
+                    date.setDate(date.getDate() + i);
+                    return {
+                        id: `${tripId}_day_${i + 1}_${Date.now()}`,
+                        tripId: tripId,
+                        dayNumber: i + 1,
+                        date: date.toISOString().split('T')[0],
+                        items: [],
+                    };
+                });
+
+                updatedTrip = {
+                    ...existingTrip,
+                    title,
+                    startDate,
+                    endDate,
+                    days,
+                    updatedAt: new Date().toISOString(),
+                };
+            } else {
+                // 날짜가 변경되지 않은 경우: 제목만 업데이트 (내용 유지)
+                updatedTrip = {
+                    ...existingTrip,
+                    title,
+                    updatedAt: new Date().toISOString(),
+                };
+            }
+
+            await storage.updateTrip(updatedTrip);
+
+            const newTrips = [...trips];
+            newTrips[tripIndex] = updatedTrip;
+
+            set({
+                trips: newTrips,
+                currentTrip: updatedTrip.id === get().currentTrip?.id ? updatedTrip : get().currentTrip, // 현재 보고 있는 여행이면 업데이트
+                isLoading: false
+            });
+        } catch (e) {
+            set({ error: '여행 수정 실패', isLoading: false });
         }
     },
 }));
